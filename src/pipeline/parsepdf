@@ -1,0 +1,60 @@
+# pylint: disable=E0401
+import PyPDF2
+import re
+
+# Define a function to extract data from a PDF file
+def extract_data_from_pdf(pdf_file_path):
+    # Open the PDF file in binary mode
+    with open(pdf_file_path, 'rb') as pdf_file:
+        pdf_reader = PyPDF2.PdfFileReader(pdf_file)
+        num_pages = pdf_reader.numPages
+
+        # Initialize variables to store extracted data
+        data = {
+            'Quota Share Percentage': [],
+            'Paid Premiums Amount': [],
+            'Quota Share Cession': [],
+            'Ceding Commission': [],
+            'Net Premium Ceded': [],
+            'Less Previously Reported': [],
+            'Premium Balance Due': [],
+            '100% Net Claims Paid': [],
+            'Less Previously Reported Claims': [],
+            'Cash Call Loss Paid': [],
+            'Claims Settled': []
+        }
+
+        # Define regular expressions to match specific data patterns
+        pattern_percentage = re.compile(r'Quota Share Percentage:\s+(\d+\.\d+)')
+        pattern_currency = re.compile(r'(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)')
+
+        # Iterate through pages and extract data
+        for page_num in range(num_pages):
+            page = pdf_reader.getPage(page_num)
+            page_text = page.extractText()
+
+            # Extract Quota Share Percentage
+            match_percentage = pattern_percentage.search(page_text)
+            if match_percentage:
+                data['Quota Share Percentage'].append(float(match_percentage.group(1)))
+
+            # Extract other financial data
+            matches_currency = pattern_currency.findall(page_text)
+            if len(matches_currency) >= 10:
+                data['Paid Premiums Amount'].append(float(matches_currency[0].replace(',', '')))
+                data['Quota Share Cession'].append(float(matches_currency[1].replace(',', '')))
+                data['Ceding Commission'].append(float(matches_currency[2].replace(',', '')))
+                data['Net Premium Ceded'].append(float(matches_currency[3].replace(',', '')))
+                data['Less Previously Reported'].append(float(matches_currency[4].replace(',', '')))
+                data['Premium Balance Due'].append(float(matches_currency[5].replace(',', '')))
+                data['100% Net Claims Paid'].append(float(matches_currency[6].replace(',', '')))
+                data['Less Previously Reported Claims'].append(float(matches_currency[7].replace(',', '')))
+                data['Cash Call Loss Paid'].append(float(matches_currency[8].replace(',', '')))
+                data['Claims Settled'].append(float(matches_currency[9].replace(',', '')))
+
+    return data
+
+# Example usage:
+pdf_file_path = 'your_pdf_file.pdf'
+extracted_data = extract_data_from_pdf(pdf_file_path)
+print(extracted_data)
